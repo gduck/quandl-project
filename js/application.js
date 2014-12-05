@@ -1,84 +1,62 @@
 jQuery(document).ready(function() {
 
-  var dataHK = [];
-  var hkUrl = 'http://api.openweathermap.org/data/2.5/history/city?q=HongKong&type=hour';
-  var dataDarwin = [];
-  var darwinUrl = 'http://api.openweathermap.org/data/2.5/history/city?q=Darwin&type=hour';
-  var dataSingapore = [];
-  var singaporeUrl = 'http://api.openweathermap.org/data/2.5/history/city?q=Singapore&type=hour';
+  var dataHousing = []; // an array of hashes
+  var urlHousing = 'https://www.quandl.com/api/v1/datasets/AUSBS/641601.json?trim_start=1986-06-30&trim_end=2014-09-30&auth_token=t4na3zBUan6kRH1ovpRY';
 
-  var KELVIN = 273.15;
+  var estSyd = [];
+  var estDwn = [];
+  var projSyd = [];
+  var projDwn = [];
 
-  var myDataObject = [{
-    'name': 'Hong Kong',
-    'url': 'http://api.openweathermap.org/data/2.5/history/city?q=HongKong&type=hour',
-    data: []
-  }, {
-    'name': 'Singapore',
-    'url': 'http://api.openweathermap.org/data/2.5/history/city?q=Singapore&type=hour',
-    data: []
-  }, {
-    'name': 'Darwin',
-    'url': 'http://api.openweathermap.org/data/2.5/history/city?q=Darwin&type=hour',
-    data: []
-  }];
 
-  //var getData = function(dataObject) {
     var getData = function(myUrl, myData) {
-    //for (each item in dataObject) {
       $.ajax({
         type: 'GET',
-        //url: myUrl,
         url: myUrl,
         dataType: 'JSON',
         success: function(response) {
-          // for loop for each item in list
-          $(response.list).each(function() {
+
+          $(response.data).each(function() {
 
             // collect each data point
-            var dataPoint = {};
-            dataPoint.x = this.dt * 1000;
-            dataPoint.y = this.main.temp - KELVIN;
+            var myDate = new Date(this[0]);
 
-            // add each data point to the data array
-            myData.push(dataPoint);
+            // est syd & dwn
+            estSyd.push({x: myDate,y: this[1]});
+            estDwn.push({x: myDate, y: this[7]});
+
+            // proj Syd & dwn
+            projSyd.push({x: myDate, y: this[28]});
+            projDwn.push({x: myDate, y: this[34]});
           })
+          //console.log('this is est syd '+estSyd);
           initializeHighChart();
         }
       });
-    //} // end for loop
   }
 
 
-  getData(hkUrl, dataHK);
-  getData(darwinUrl, dataDarwin);
-  getData(singaporeUrl, dataSingapore);
+  getData(urlHousing, dataHousing);
 
-  // so only run once
-  // setTimeout(function(){
-  //   // do something
-  //   initializeHighChart();
-  // }, 1000);
-  // better to keep track of completed cities, render when finished
 
 
   function initializeHighChart() {
-    $('#chart').highcharts({
+    $('#chart').highcharts("StockChart",{
       // key: value
       title: {
-        text: 'Historical Temperatures'
+        text: 'Historical House Price Indices'
       },
       subtitle: {
-        text: 'Openweathermap.org'
+        text: 'Sydney and Darwin'
       },
       xAxis: {
         // configuration of xAxis
         type: 'datetime',
         dateTimeLabelFormats: {
-          millisecond: '%H:%M:%S.%L',
-          second: '%H:%M:%S',
-          minute: '%H:%M',
-          hour: '%H:%M',
+          //millisecond: '%H:%M:%S.%L',
+          //second: '%H:%M:%S',
+          //minute: '%H:%M',
+          //hour: '%H:%M',
           day: '%e. %b',
           week: '%e. %b',
           month: '%b \'%y',
@@ -87,10 +65,10 @@ jQuery(document).ready(function() {
       },
       yAxis: {
         // configuration of yAxis
-        min: 10,
-        max: 35,
+        min: 20,
+        max: 200,
         title: {
-          text: 'Temperature (C)'
+          text: 'Index'
         }
       },
       legend: {
@@ -102,14 +80,18 @@ jQuery(document).ready(function() {
       },
       series: [{
         // Data points
-        name: 'Hong Kong',
-        data: dataHK
-      }, {
-        name: 'Darwin',
-        data: dataDarwin
-      }, {
-        name: 'Singapore',
-        data: dataSingapore
+        name: 'SYD Established',
+        data: estSyd.reverse()
+      },{
+        name: 'DWN Established',
+        data: estDwn.reverse()
+      },{
+        name: 'SYD Project',
+        data: projSyd.reverse()
+      },{
+        name: 'DWN Project',
+        data: projDwn.reverse()
+
       }]
     });
 
