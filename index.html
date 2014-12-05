@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="playing with Highcharts">
+  <meta name="author" content="Dale Foo">
+  <title>Introduction to Highcharts</title>
+
+  <!-- Jquery Library -->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+  <!-- Bootstrap Library -->
+  <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Highchart Library -->
+  <!-- // <script src="js/highcharts.js"></script> -->
+  <script src="js/highstock.js"></script>
+  <script src="js/exporting.js"></script>
+
+  <!-- Custom Javascript -->
+  <script src="js/application2.js"></script>
+  <!-- Custom CSS -->
+  <link href="css/custom.css" rel="stylesheet">
+
+</head>
+
+<body>
+  <div class="container-fluid">
+    <div class="row">
+      <div id="chart"></div>
+    </div>
+    <div class="row">
+      <div class="spacer col-xs-2"></div>
+      <div id="annotationInputGUI" class="col-xs-4">
+        <form id="annotionForm">
+          <div id="annotationTitle">
+            Annotation Title
+          </div>
+          <input id="inputTitle" type="text" placeholder="Annotation Title">
+          <div id="annotationContent">
+            Annotation Content
+          </div>
+          <input id="inputContent" type="text" placeholder="Annotation Content">
+          <div id="annotationDate">
+            Annotation Date
+          </div>
+          <div id="dateInput">
+          </div>
+          <input type="submit" value="Submit">
+        </form>
+      </div>
+      <div id="annotationList" class="col-xs-4">Here is a list of annotations</div>
+      <div class="spacer col-xs-2"></div> 
+    </div>  <!-- end row -->
+  </div> <!-- end container-fluid -->
+
+</body>
+
+</html>
