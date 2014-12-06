@@ -9,9 +9,11 @@ jQuery(document).ready(function() {
   var projDwn = [];
   var haveData = false;
 
+  var chartUser = 'Dale';
+
   // only on series annotation for now
   var annotationArray = [];
-  var annotationData = {};
+  //var annotationData = {};
 
   var getData = function(myUrl, myData) {
     $.ajax({
@@ -46,6 +48,12 @@ jQuery(document).ready(function() {
             });
           }) //end for each loop
 
+        // put data in right date order
+        estSyd.reverse();
+        estDwn.reverse();
+        projSyd.reverse();
+        projDwn.reverse();
+
         haveData = true;
         //console.log('this is est syd '+estSyd);
         initializeHighChart();
@@ -59,28 +67,40 @@ jQuery(document).ready(function() {
 
   // trying to retrieve data only if we don't already have it
   // not working at the moment
-  if (haveData == false) {
+  //if (haveData == false) {
     getData(urlHousing, dataHousing);
-  } else {
+  //} else {
     //initializeHighChart();
-  }
+  //}
 
 
   $('#submit').click(function() {
-    alert("button clicked");
-    var title = $('#inputTitle').val();
-    var content = $('#inputContent').val();
-    var date = $('#inputDate').val();
-    annotationData.title = $('#inputTitle').val();
-    annotationData.content = $('#inputTitle').val();
-    annotationData.date = $('#inputDate').val();
-    annotationArray.push(annotationData);
-    console.log(annotationArray);
+
+    //annotationData.title = $('#inputTitle').val();
+    //annotationData.content = $('#inputTitle').val();
+    //annotationData.x = new Date($('#inputDate').val());
+    //annotationData.user = chartUser;
+
+    annotationArray.push({
+      title: $('#inputTitle').val(),
+      content: $('#inputTitle').val(),
+      x: new Date($('#inputDate').val()),
+      user: chartUser
+    });
+
+    initializeHighChart();
   });
 
 
+
+
   function initializeHighChart() {
-    $('#chart').highcharts("StockChart", {
+    // var chart = $('#chart').highcharts("StockChart", {
+    var chart = new Highcharts.StockChart({
+      chart: {
+        renderTo: 'chart',
+        alignTicks: false
+      },
       // key: value
       title: {
         text: 'Historical House Price Indices'
@@ -120,30 +140,43 @@ jQuery(document).ready(function() {
       series: [{
         // Data points
         name: 'SYD Established',
-        data: estSyd.reverse()
+        data: estSyd
       }, {
         name: 'DWN Established',
-        data: estDwn.reverse()
+        data: estDwn
       }, {
         name: 'SYD Project',
-        data: projSyd.reverse()
+        data: projSyd
       }, {
         name: 'DWN Project',
-        data: projDwn.reverse()
+        data: projDwn
       }, {
+        id: 'flagSeries',
         type: 'flags',
         name: 'Flags on series',
-        data: [{}],
+        data: annotationArray.sort(mySort),
         onSeries: 'dataseries',
         shape: 'squarepin'
       }, {
+        id: 'flagAxis',
         type: 'flags',
         name: 'Flags on axis',
-        data: [{}],
+        data: [],
         shape: 'squarepin'
       }]
     });
+    return chart;
   }
+
+  var mySort = function(obj1, obj2) {
+    if (obj1.x < obj2.x){
+      return -1;
+    }
+    if (obj1.x > obj2.x) {
+      return 1;
+    }
+    return 0;
+  };
 
 
 
