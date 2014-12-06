@@ -32,25 +32,26 @@
   <div class="container-fluid">
     <div class="row">
       <div id="chart"></div>
+      <div id="noChart">Please wait, retrieving data....</div>
     </div>
     <div class="row">
       <div class="spacer col-xs-2"></div>
       <div id="annotationInputGUI" class="col-xs-4">
-        <form id="annotionForm">
+<!--    <form id="annotionForm" action="" method="POST">-->          
+        <form id="annotionForm" action="">
           <div id="annotationTitle">
             Annotation Title
           </div>
-          <input id="inputTitle" type="text" placeholder="Annotation Title">
+          <input id="inputTitle" class="inputBox" type="text" placeholder="Annotation Title">
           <div id="annotationContent">
             Annotation Content
           </div>
-          <input id="inputContent" type="text" placeholder="Annotation Content">
+          <input id="inputContent" class="inputBox" type="text" placeholder="Annotation Content">
           <div id="annotationDate">
             Annotation Date
           </div>
-          <div id="dateInput">
-          </div>
-          <input type="submit" value="Submit">
+          <input id="inputDate" class="inputBox" type="month">
+          <input id="submit" type="button" value="Submit">
         </form>
       </div>
       <div id="annotationList" class="col-xs-4">Here is a list of annotations</div>

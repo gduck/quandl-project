@@ -3,3 +3,11 @@
 .annotationGUI {
   
 }
+
+.inputBox {
+  width: 400px;
+}
+
+#inputContent {
+  height: 200px;
+}
