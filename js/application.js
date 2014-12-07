@@ -82,10 +82,15 @@ jQuery(document).ready(function() {
             x: this.x
           });
         });
+        // for now - delete all rows & redraw each time
+        $('#annotation-table tr:not(:first)').remove();
+
         // still in success function, now draw table
         var table = document.getElementById('annotation-table');
+        
         for (var i = 0; i < annotationArray.length; i++) {
           var row = table.insertRow(1);
+          row.id = annotationArray[i].id;
 
           var cellTitle = row.insertCell(0);
           cellTitle.innerHTML = annotationArray[i].title;
@@ -94,15 +99,19 @@ jQuery(document).ready(function() {
           cellContent.innerHTML = annotationArray[i].content;
 
           var cellDate = row.insertCell(2);
-          cellDate.innerHTML = annotationArray[i].x;
+          // below * 1 is needed to get it to recognise as a number(???)
+          var aDate = new Date(annotationArray[i].x * 1);
+                  // stupid date stuff
+          var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          cellDate.innerHTML = (months[(aDate.getMonth())] + " " + aDate.getFullYear());
 
           var cellUser = row.insertCell(3);
           cellUser.innerHTML = annotationArray[i].user;
 
           var cellButtons = row.insertCell(4);
           cellButtons.innerHTML =
-            '<button id=\"update-button\" class=\"btn btn-default\">Update</button>\
-                  <button id=\"delete-button\" class=\"btn btn-danger\">Delete</button>';
+            '<button class=\"update-button btn btn-default\">Update</button>\
+                  <button class=\"delete-button btn btn-danger\">Delete</button>';
         }
 
       }
@@ -131,9 +140,8 @@ jQuery(document).ready(function() {
     if (validateForm('#annotation-form')) {
       var formData = $('form#annotation-form').serializeObject();
       formData.user = chartUser;
-      formData.dateCreated = new Date();
-      formData.date = new Date(formData.date);
-      console.log(formData);
+      formData.dateCreated = new Date() * 1000;
+      formData.date = new Date(formData.date) * 1000;
       submitAnnotation(formData);
     } else {
       alert("Annotation not uploaded");
@@ -150,8 +158,23 @@ jQuery(document).ready(function() {
     initializeHighChart();
   });
 
-
-
+  // $('.delete-button').click(function() {
+    $(document).on('click', '.delete-button', function() {
+    console.log("ok we are clicking delete");
+    // this is the row
+    rowToDelete = $(this).parent().parent();
+    console.log(rowToDelete);
+    console.log($(rowToDelete).id);
+    var keyID = $(this).parent().parent().id;
+    console.log(keyID);
+    // $.ajax({
+    //   type: 'DELETE',
+    //   url: 'http://ga-wdi-api.meteor.com/api/posts/DZWPnTG2943FE3NSZ',
+    //   success: function(response) {
+    //     alert("blah blah");
+    //    }
+    // })
+  });
 
   var initializeHighChart = function() {
     // var chart = $('#chart').highcharts("StockChart", {
@@ -259,7 +282,7 @@ jQuery(document).ready(function() {
         title: dataObject.title,
         text: dataObject.content,
         // some problem rendering graph, annotation date not correct format
-        x: dataObject.date.getTime()/1000,
+        x: dataObject.date
       },
       success: function(response) {
         alert("Something was successful");
@@ -273,10 +296,15 @@ jQuery(document).ready(function() {
   createAnnotationList();
   //getAnnotations();
 
-// to delete
+// to modify
 // $.ajax({
-//   type: 'DELETE',
-//   url: 'http://ga-wdi-api.meteor.com/api/posts/DZWPnTG2943FE3NSZ',
+//   type: 'PUT',
+//   url: 'http://ga-wdi-api.meteor.com/api/posts/fuwvsqpupYBWgGmhX',
+//   data: {
+//   x: "638928000000",
+//   dateModified: new Date()
+//   },
+//   dataType: 'JSON',
 //   success: function(response) {
 //     alert("blah blah");
 //   }
