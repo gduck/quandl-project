@@ -21,6 +21,9 @@
   <script src="js/highstock.js"></script>
   <script src="js/exporting.js"></script>
 
+  <!-- Serialise Object library -->
+  <script src="js/jquery.serialize-object.min.js"></script>
+
   <!-- Custom Javascript -->
   <script src="js/application.js"></script>
   <!-- Custom CSS -->
@@ -35,27 +38,38 @@
       <div id="noChart">Please wait, retrieving data....</div>
     </div>
     <div class="row">
-      <div class="spacer col-xs-2"></div>
+      <div class="spacer col-xs-1"></div>
       <div id="annotationInputGUI" class="col-xs-4">
 <!--    <form id="annotionForm" action="" method="POST">-->          
-        <form id="annotionForm" action="">
+        <form id="annotation-form" class="form-responsive" action="">
           <div id="annotationTitle">
             Annotation Title
           </div>
-          <input id="inputTitle" class="inputBox" type="text" placeholder="Annotation Title">
+          <input name="title" id="inputTitle" class="form-control input-xlarge inputBox" type="text" placeholder="Annotation Title">
           <div id="annotationContent">
             Annotation Content
           </div>
-          <input id="inputContent" class="inputBox" type="text" placeholder="Annotation Content">
+          <textarea name="content" id="inputContent" class="form-control inputBox" type="text" placeholder="Annotation Content"></textarea>
           <div id="annotationDate">
             Annotation Date
           </div>
-          <input id="inputDate" class="inputBox" type="month">
+          <input name="date" id="inputDate" class="input-xlarge form-control inputBox" type="month">
           <input id="submit" type="button" value="Submit">
         </form>
       </div>
-      <div id="annotationList" class="col-xs-4">Here is a list of annotations</div>
-      <div class="spacer col-xs-2"></div> 
+      <div id="annotation-list-container" class="col-xs-6"><h3>ANNOTATIONS</h3>
+        <table id="annotation-table" class="col-xs-12">
+          <tr>
+            <th>Title</th>
+            <th>Content</th>
+            <th>Date</th>
+            <th>Created by</th>
+            <th></th>
+          </tr>
+          <tr></tr>
+        </table>
+      </div>
+      <div class="spacer col-xs-1"></div> 
     </div>  <!-- end row -->
   </div> <!-- end container-fluid -->
 

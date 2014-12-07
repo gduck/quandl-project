@@ -5,9 +5,9 @@
 }
 
 .inputBox {
-  width: 400px;
+  min-width: 100px;
 }
 
 #inputContent {
-  height: 200px;
+  /*height: 200px;*/
 }

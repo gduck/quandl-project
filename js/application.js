@@ -2,32 +2,31 @@ jQuery(document).ready(function() {
 
   var dataHousing = {}; // an array of hashes
   var urlHousing = 'https://www.quandl.com/api/v1/datasets/AUSBS/641601.json?trim_start=1986-06-30&trim_end=2014-09-30&auth_token=t4na3zBUan6kRH1ovpRY';
-
-  var estSyd = [];
-  var estDwn = [];
-  var projSyd = [];
-  var projDwn = [];
-  var haveData = false;
+  //var haveData = false;
 
   var chartUser = 'Dale';
+  var chart;
 
   // only on series annotation for now
   var annotationArray = [];
   //var annotationData = {};
 
-  var getData = function(myUrl, myData) {
+  var getHouseData = function(myUrl) {
     $.ajax({
       type: 'GET',
       url: myUrl,
       dataType: 'JSON',
       success: function(response) {
-
+        var estSyd = [];
+        var estDwn = [];
+        var projSyd = [];
+        var projDwn = [];
         $(response.data).each(function() {
 
             // collect each data point
             var myDate = new Date(this[0]);
 
-            // est syd & dwn
+            // established homes for Sydney & Darwin
             estSyd.push({
               x: myDate,
               y: this[1]
@@ -37,7 +36,7 @@ jQuery(document).ready(function() {
               y: this[7]
             });
 
-            // proj Syd & dwn
+            // new project homes for Sydney & Darwin
             projSyd.push({
               x: myDate,
               y: this[28]
@@ -54,39 +53,99 @@ jQuery(document).ready(function() {
         projSyd.reverse();
         projDwn.reverse();
 
-        haveData = true;
-        //console.log('this is est syd '+estSyd);
-        initializeHighChart();
+        dataHousing = [estSyd, estDwn, projSyd, projDwn];
+        //haveData = true;
+
+        chart = initializeHighChart();
 
         // get rid of please wait message
         $('#noChart').html("");
+      }
+
+    });
+    return dataHousing;
+  }
+
+  var createAnnotationList = function() {
+    $.ajax({
+      type: 'GET',
+      url: "http://ga-wdi-api.meteor.com/api/posts/search/Dale",
+      dataType: 'JSON',
+      success: function(response) {
+        $(response).each(function() {
+          annotationArray.push({
+            id: this._id,
+            dateCreated: this.dateCreated,
+            title: this.title,
+            content: this.text, // change to content for my data
+            user: this.user,
+            x: this.x
+          });
+        });
+        // still in success function, now draw table
+        var table = document.getElementById('annotation-table');
+        for (var i = 0; i < annotationArray.length; i++) {
+          var row = table.insertRow(1);
+
+          var cellTitle = row.insertCell(0);
+          cellTitle.innerHTML = annotationArray[i].title;
+
+          var cellContent = row.insertCell(1);
+          cellContent.innerHTML = annotationArray[i].content;
+
+          var cellDate = row.insertCell(2);
+          cellDate.innerHTML = annotationArray[i].x;
+
+          var cellUser = row.insertCell(3);
+          cellUser.innerHTML = annotationArray[i].user;
+
+          var cellButtons = row.insertCell(4);
+          cellButtons.innerHTML =
+            '<button id=\"update-button\" class=\"btn btn-default\">Update</button>\
+                  <button id=\"delete-button\" class=\"btn btn-danger\">Delete</button>';
+        }
 
       }
     });
+  };
+
+  var validateForm = function(formID) {
+    return true;
   }
 
-  // trying to retrieve data only if we don't already have it
-  // not working at the moment
-  //if (haveData == false) {
-    getData(urlHousing, dataHousing);
-  //} else {
-    //initializeHighChart();
-  //}
-
+  var removeAnnotation = function(keyID) {
+    $.ajax({
+      type: 'DELETE',
+      url: 'http://ga-wdi-api.meteor.com/api/posts/' + keyID,
+      success: function(response) {
+        alert("something was removed");
+      }
+    })
+  }
 
   $('#submit').click(function() {
+    //$('#annotationForm').submit(function(e) {
+    //console.log(e);
+    //e.preventDefault();
+    //submitAnnotation( returnFormContents('new-annotation-form'));
+    if (validateForm('#annotation-form')) {
+      var formData = $('form#annotation-form').serializeObject();
+      formData.user = chartUser;
+      formData.dateCreated = new Date();
+      formData.date = new Date(formData.date);
+      console.log(formData);
+      submitAnnotation(formData);
+    } else {
+      alert("Annotation not uploaded");
+    }
+    //var formData = returnFormContents('annotation-form');
 
-    //annotationData.title = $('#inputTitle').val();
-    //annotationData.content = $('#inputTitle').val();
-    //annotationData.x = new Date($('#inputDate').val());
-    //annotationData.user = chartUser;
-
-    annotationArray.push({
-      title: $('#inputTitle').val(),
-      content: $('#inputTitle').val(),
-      x: new Date($('#inputDate').val()),
-      user: chartUser
-    });
+    // annotationArray.push({
+    //   title: $('#inputTitle').val(),
+    //   content: $('#inputTitle').val(),
+    //   x: new Date($('#inputDate').val()),
+    //   user: chartUser
+    // });
 
     initializeHighChart();
   });
@@ -94,12 +153,23 @@ jQuery(document).ready(function() {
 
 
 
-  function initializeHighChart() {
+  var initializeHighChart = function() {
     // var chart = $('#chart').highcharts("StockChart", {
-    var chart = new Highcharts.StockChart({
+    var newChart = new Highcharts.StockChart({
       chart: {
         renderTo: 'chart',
-        alignTicks: false
+        alignTicks: false,
+        events: {
+          // click: function(e) {
+          //   // find the clicked values and the series
+          //   var x = e.xAxis[0].value,
+          //     y = e.yAxis[0].value,
+          //     series = this.series[0];
+
+          //   // Add it
+          //   series.addPoint([x, y]);
+          // }
+        }
       },
       // key: value
       title: {
@@ -140,22 +210,23 @@ jQuery(document).ready(function() {
       series: [{
         // Data points
         name: 'SYD Established',
-        data: estSyd
+        data: dataHousing[0]
       }, {
         name: 'DWN Established',
-        data: estDwn
+        data: dataHousing[1]
       }, {
         name: 'SYD Project',
-        data: projSyd
+        data: dataHousing[2]
       }, {
         name: 'DWN Project',
-        data: projDwn
+        data: dataHousing[3]
       }, {
+        // need to identify which series of data the flag will sit on
         id: 'flagSeries',
         type: 'flags',
         name: 'Flags on series',
         data: annotationArray.sort(mySort),
-        onSeries: 'dataseries',
+        onSeries: '',
         shape: 'squarepin'
       }, {
         id: 'flagAxis',
@@ -165,11 +236,11 @@ jQuery(document).ready(function() {
         shape: 'squarepin'
       }]
     });
-    return chart;
+    return newChart;
   }
 
   var mySort = function(obj1, obj2) {
-    if (obj1.x < obj2.x){
+    if (obj1.x < obj2.x) {
       return -1;
     }
     if (obj1.x > obj2.x) {
@@ -178,38 +249,38 @@ jQuery(document).ready(function() {
     return 0;
   };
 
+  var submitAnnotation = function(dataObject) {
+    $.ajax({
+      type: 'POST',
+      url: 'http://ga-wdi-api.meteor.com/api/posts',
+      dataType: 'JSON',
+      data: {
+        user: dataObject.user,
+        title: dataObject.title,
+        text: dataObject.content,
+        // some problem rendering graph, annotation date not correct format
+        x: dataObject.date.getTime()/1000,
+      },
+      success: function(response) {
+        alert("Something was successful");
+        createAnnotationList();
+      }
+    })
+  };
+
+  // it would be nice to implement re render only on page refresh
+  getHouseData(urlHousing);
+  createAnnotationList();
+  //getAnnotations();
+
+// to delete
+// $.ajax({
+//   type: 'DELETE',
+//   url: 'http://ga-wdi-api.meteor.com/api/posts/DZWPnTG2943FE3NSZ',
+//   success: function(response) {
+//     alert("blah blah");
+//   }
+// })
 
 
 }); // end document ready
-
-// series: [{
-//                 name: 'USD to EUR',
-//                 data: data,
-//                 id: 'dataseries',
-//                 tooltip: {
-//                     valueDecimals: 4
-//                 }
-//             }, {
-//                 type: 'flags',
-//                 name: 'Flags on series',
-//                 data: [{
-//                     x: Date.UTC(2011, 1, 22),
-//                     title: 'On series'
-//                 }, {
-//                     x: Date.UTC(2011, 3, 28),
-//                     title: 'On series'
-//                 }],
-//                 onSeries: 'dataseries',
-//                 shape: 'squarepin'
-//             }, {
-//                 type: 'flags',
-//                 name: 'Flags on axis',
-//                 data: [{
-//                     x: Date.UTC(2011, 2, 1),
-//                     title: 'On axis'
-//                 }, {
-//                     x: Date.UTC(2011, 3, 1),
-//                     title: 'On axis'
-//                 }],
-//                 shape: 'squarepin'
-//             }]
