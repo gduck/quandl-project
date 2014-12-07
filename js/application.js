@@ -111,7 +111,7 @@ jQuery(document).ready(function() {
           var cellButtons = row.insertCell(4);
           cellButtons.innerHTML =
             '<button class=\"update-button btn btn-default\">Update</button>\
-                  <button class=\"delete-button btn btn-danger\">Delete</button>';
+                  <button id=\"' + annotationArray[i].id + '\" class=\"delete-button btn btn-danger\">Delete</button>';
         }
 
       }
@@ -164,16 +164,16 @@ jQuery(document).ready(function() {
     // this is the row
     rowToDelete = $(this).parent().parent();
     console.log(rowToDelete);
-    console.log($(rowToDelete).id);
-    var keyID = $(this).parent().parent().id;
+    var keyID = this.id;
     console.log(keyID);
-    // $.ajax({
-    //   type: 'DELETE',
-    //   url: 'http://ga-wdi-api.meteor.com/api/posts/DZWPnTG2943FE3NSZ',
-    //   success: function(response) {
-    //     alert("blah blah");
-    //    }
-    // })
+    var myUrl = 'http://ga-wdi-api.meteor.com/api/posts/' + keyID;
+    $.ajax({
+      type: 'DELETE',
+      url: myUrl,
+      success: function(response) {
+        alert("blah blah");
+       }
+    })
   });
 
   var initializeHighChart = function() {
