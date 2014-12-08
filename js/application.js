@@ -1,16 +1,14 @@
 jQuery(document).ready(function() {
 
-  var dataHousing = {}; // an array of hashes
+
   var urlHousing = 'https://www.quandl.com/api/v1/datasets/AUSBS/641601.json?trim_start=1986-06-30&trim_end=2014-09-30&auth_token=t4na3zBUan6kRH1ovpRY';
-  //var haveData = false;
-
   var chartUser = 'Dale';
-  var chart;
 
-  // only on series annotation for now
+  var dataHousing = {}; 
+  var highChart;
   var annotationArray = [];
-  //var annotationData = {};
 
+  // get housing data, put into global dataHousing, initializeHighChart
   var getHouseData = function(myUrl) {
     $.ajax({
       type: 'GET',
@@ -24,7 +22,8 @@ jQuery(document).ready(function() {
         $(response.data).each(function() {
 
             // collect each data point
-            var myDate = new Date(this[0]);
+            //var myDate = new Date(this[0]);
+            var myDate = moment(this[0]);
 
             // established homes for Sydney & Darwin
             estSyd.push({
@@ -54,9 +53,7 @@ jQuery(document).ready(function() {
         projDwn.reverse();
 
         dataHousing = [estSyd, estDwn, projSyd, projDwn];
-        //haveData = true;
-
-        chart = initializeHighChart();
+        highChart = initializeHighChart(dataHousing);
 
         // get rid of please wait message
         $('#noChart').html("");
@@ -66,12 +63,15 @@ jQuery(document).ready(function() {
     return dataHousing;
   }
 
-  var createAnnotationList = function() {
+  // GET annotation list, put into global annotationArray,
+  // (re)initializeHighChart, clear existing table & write new data into it
+  var createAnnotationList = function(annotations) {
     $.ajax({
       type: 'GET',
       url: "http://ga-wdi-api.meteor.com/api/posts/search/Dale",
       dataType: 'JSON',
       success: function(response) {
+        annotationArray = [];
         $(response).each(function() {
           annotationArray.push({
             id: this._id,
@@ -82,12 +82,18 @@ jQuery(document).ready(function() {
             x: this.x
           });
         });
+
+        initializeHighChart(dataHousing);
+
+        // debugger
+
         // for now - delete all rows & redraw each time
         $('#annotation-table tr:not(:first)').remove();
+        //document.getElementById('#annotation-table tr:not(:first)').remove();
 
         // still in success function, now draw table
         var table = document.getElementById('annotation-table');
-        
+
         for (var i = 0; i < annotationArray.length; i++) {
           var row = table.insertRow(1);
           row.id = annotationArray[i].id;
@@ -99,86 +105,25 @@ jQuery(document).ready(function() {
           cellContent.innerHTML = annotationArray[i].content;
 
           var cellDate = row.insertCell(2);
-          // below * 1 is needed to get it to recognise as a number(???)
-          var aDate = new Date(annotationArray[i].x * 1);
-                  // stupid date stuff
-          var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-          cellDate.innerHTML = (months[(aDate.getMonth())] + " " + aDate.getFullYear());
+          var aDate = moment(annotationArray[i].x, 'x');
+          cellDate.innerHTML = aDate.format('MMMM YYYY');
 
           var cellUser = row.insertCell(3);
           cellUser.innerHTML = annotationArray[i].user;
 
           var cellButtons = row.insertCell(4);
           cellButtons.innerHTML =
-            '<button class=\"update-button btn btn-default\">Update</button>\
-                  <button id=\"' + annotationArray[i].id + '\" class=\"delete-button btn btn-danger\">Delete</button>';
+            '<button data-id=\"' + annotationArray[i].id + '\" class=\"update-button btn btn-default\">Update</button>\
+                  <button data-id=\"' + annotationArray[i].id + '\" class=\"delete-button btn btn-danger\">Delete</button>';
         }
-
       }
     });
-  };
-
-  var validateForm = function(formID) {
-    return true;
   }
 
-  var removeAnnotation = function(keyID) {
-    $.ajax({
-      type: 'DELETE',
-      url: 'http://ga-wdi-api.meteor.com/api/posts/' + keyID,
-      success: function(response) {
-        alert("something was removed");
-      }
-    })
-  }
-
-  $('#submit').click(function() {
-    //$('#annotationForm').submit(function(e) {
-    //console.log(e);
-    //e.preventDefault();
-    //submitAnnotation( returnFormContents('new-annotation-form'));
-    if (validateForm('#annotation-form')) {
-      var formData = $('form#annotation-form').serializeObject();
-      formData.user = chartUser;
-      formData.dateCreated = new Date() * 1000;
-      formData.date = new Date(formData.date) * 1000;
-      submitAnnotation(formData);
-    } else {
-      alert("Annotation not uploaded");
-    }
-    //var formData = returnFormContents('annotation-form');
-
-    // annotationArray.push({
-    //   title: $('#inputTitle').val(),
-    //   content: $('#inputTitle').val(),
-    //   x: new Date($('#inputDate').val()),
-    //   user: chartUser
-    // });
-
-    initializeHighChart();
-  });
-
-  // $('.delete-button').click(function() {
-    $(document).on('click', '.delete-button', function() {
-    console.log("ok we are clicking delete");
-    // this is the row
-    rowToDelete = $(this).parent().parent();
-    console.log(rowToDelete);
-    var keyID = this.id;
-    console.log(keyID);
-    var myUrl = 'http://ga-wdi-api.meteor.com/api/posts/' + keyID;
-    $.ajax({
-      type: 'DELETE',
-      url: myUrl,
-      success: function(response) {
-        alert("blah blah");
-       }
-    })
-  });
-
-  var initializeHighChart = function() {
-    // var chart = $('#chart').highcharts("StockChart", {
-    var newChart = new Highcharts.StockChart({
+  // set up new chart, series & flags
+  var initializeHighChart = function(dataHousing) {
+    var newChart = $('#chart').highcharts("StockChart", {
+      // var newChart = new Highcharts.StockChart({
       chart: {
         renderTo: 'chart',
         alignTicks: false,
@@ -205,10 +150,6 @@ jQuery(document).ready(function() {
         // configuration of xAxis
         type: 'datetime',
         dateTimeLabelFormats: {
-          //millisecond: '%H:%M:%S.%L',
-          //second: '%H:%M:%S',
-          //minute: '%H:%M',
-          //hour: '%H:%M',
           day: '%e. %b',
           week: '%e. %b',
           month: '%b \'%y',
@@ -239,7 +180,9 @@ jQuery(document).ready(function() {
         data: dataHousing[1]
       }, {
         name: 'SYD Project',
-        data: dataHousing[2]
+        data: dataHousing[2],
+        id: 'dataseries'
+
       }, {
         name: 'DWN Project',
         data: dataHousing[3]
@@ -249,29 +192,15 @@ jQuery(document).ready(function() {
         type: 'flags',
         name: 'Flags on series',
         data: annotationArray.sort(mySort),
-        onSeries: '',
-        shape: 'squarepin'
-      }, {
-        id: 'flagAxis',
-        type: 'flags',
-        name: 'Flags on axis',
-        data: [],
+        onSeries: 'dataseries',
         shape: 'squarepin'
       }]
     });
+
     return newChart;
   }
 
-  var mySort = function(obj1, obj2) {
-    if (obj1.x < obj2.x) {
-      return -1;
-    }
-    if (obj1.x > obj2.x) {
-      return 1;
-    }
-    return 0;
-  };
-
+  // POST data passed to it, call createAnnotationList on success
   var submitAnnotation = function(dataObject) {
     $.ajax({
       type: 'POST',
@@ -285,30 +214,112 @@ jQuery(document).ready(function() {
         x: dataObject.date
       },
       success: function(response) {
-        alert("Something was successful");
-        createAnnotationList();
+        createAnnotationList(annotationArray);
+        console.log("submitAnnotation was successful")
       }
     })
+  }
+
+  // DELETE data from server given the unique ID, (re)createAnnotationList
+  var removeAnnotation = function(keyID) {
+    $.ajax({
+      type: 'DELETE',
+      url: 'http://ga-wdi-api.meteor.com/api/posts/' + keyID,
+      success: function(response) {
+        createAnnotationList(annotationArray);
+        console.log("removeAnnotation was successful");
+      }
+    })
+  }
+
+  // submit data, serialize and call SubmitAnnotation
+  $('#submit').click(function() {
+    if (validateForm('#annotation-form')) {
+      var formData = $('form#annotation-form').serializeObject();
+      formData.user = chartUser;
+      formData.dateCreated = new Date() * 1000;
+      formData.date = moment(formData.date, 'x');
+      // formData.date = new Date(formData.date) * 1;
+      submitAnnotation(formData);
+    } else {
+      alert("Annotation not uploaded");
+    }
+    //var formData = returnFormContents('annotation-form');
+
+    // annotationArray.push({
+    //   title: $('#inputTitle').val(),
+    //   content: $('#inputTitle').val(),
+    //   x: new Date($('#inputDate').val()),
+    //   user: chartUser
+    // });
+
+    highChart = initializeHighChart(dataHousing);
+  });
+
+  // find the unique ID from the data-id of the button, removeAnnotation(ID)
+  $(document).on('click', '.delete-button', function() {
+    var keyID = $(this).data('id');
+    removeAnnotation(keyID);
+  });
+
+  // put the data in the form for updating
+  $(document).on('click', '.update-button', function() {
+    var keyID = $(this).data('id');
+    fillForm(keyID);
+  });
+
+  // fill the form and change the button to be an update button
+  // later add a cancel button
+  var fillForm = function (keyID) {
+    $.ajax({
+      type: 'GET',
+      url: 'http://ga-wdi-api.meteor.com/api/posts/' + keyID,
+      success: function(response) {
+        
+        $('#inputTitle').val(response.title);
+        $('#inputContent').val(response.text);
+        //$('#inputDate').val('April 1990');        
+        $('#inputDate').val(new Date(response.x));
+        $('#inputDate').val(response.x);
+      }
+    })
+  }
+
+
+  // required to sort the annotation list by date
+  var mySort = function(obj1, obj2) {
+    if (obj1.x < obj2.x) {
+      return -1;
+    }
+    if (obj1.x > obj2.x) {
+      return 1;
+    }
+    return 0;
   };
 
-  // it would be nice to implement re render only on page refresh
-  getHouseData(urlHousing);
-  createAnnotationList();
-  //getAnnotations();
+  // no validation yet
+  var validateForm = function(formID) { return true; }
 
-// to modify
-// $.ajax({
-//   type: 'PUT',
-//   url: 'http://ga-wdi-api.meteor.com/api/posts/fuwvsqpupYBWgGmhX',
-//   data: {
-//   x: "638928000000",
-//   dateModified: new Date()
-//   },
-//   dataType: 'JSON',
-//   success: function(response) {
-//     alert("blah blah");
-//   }
-// })
+
+  getHouseData(urlHousing);
+  createAnnotationList(annotationArray);
+
+
+
+
+  // to modify
+  // $.ajax({
+  //   type: 'PUT',
+  //   url: 'http://ga-wdi-api.meteor.com/api/posts/fuwvsqpupYBWgGmhX',
+  //   data: {
+  //   x: "638928000000",
+  //   dateModified: new Date()
+  //   },
+  //   dataType: 'JSON',
+  //   success: function(response) {
+  //     alert("blah blah");
+  //   }
+  // })
 
 
 }); // end document ready
