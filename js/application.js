@@ -66,7 +66,7 @@ jQuery(document).ready(function() {
 
     // GET annotation list, put into global annotationArray,
     // (re)initializeHighChart, clear existing table & write new data into it
-    var createAnnotationList = function(annotations) {
+    var createChartAnnotationList = function(annotations) {
         $.ajax({
             type: 'GET',
             url: "http://ga-wdi-api.meteor.com/api/posts/search/Dale",
@@ -196,8 +196,16 @@ jQuery(document).ready(function() {
         return newChart;
     }
 
-    // POST data passed to it, call createAnnotationList on success
+    // POST data passed to it, call createChartAnnotationList on success
     var submitAnnotation = function(dataObject) {
+        var submission = {};
+        submission = dataObject;
+
+        submission.user = chartUser;
+        submission.dateCreated = moment();
+        var unixTimeDate = moment(submission.date, "YYYY-MM");
+        submission.date = unixTimeDate;
+
         $.ajax({
             type: 'POST',
             url: 'http://ga-wdi-api.meteor.com/api/posts',
@@ -209,19 +217,20 @@ jQuery(document).ready(function() {
                 x: dataObject.date.valueOf()
             },
             success: function(response) {
-                createAnnotationList(annotationArray);
+                //initializeHighChart(dataHousing);
+                createChartAnnotationList(annotationArray);
                 console.log("submitAnnotation was successful")
             }
         })
     }
 
-    // DELETE data from server given the unique ID, (re)createAnnotationList
+    // DELETE data from server given the unique ID, (re)createChartAnnotationList
     var removeAnnotation = function(keyID) {
         $.ajax({
             type: 'DELETE',
             url: 'http://ga-wdi-api.meteor.com/api/posts/' + keyID,
             success: function(response) {
-                createAnnotationList(annotationArray);
+                createChartAnnotationList(annotationArray);
                 console.log("removeAnnotation was successful");
             }
         })
@@ -238,8 +247,6 @@ jQuery(document).ready(function() {
         var unixTimeDate = moment(submission.editDate, "YYYY-MM");
         submission.editDate = unixTimeDate;
 
-        console.log(submission);
-
         $.ajax({
             type: 'PUT',
             url: 'http://ga-wdi-api.meteor.com/api/posts/' + keyID,
@@ -251,8 +258,7 @@ jQuery(document).ready(function() {
                 dateModified: submission.dateModified.valueOf()
             },
             success: function(response) {
-                createAnnotationList(annotationArray);
-                console.log("updateAnnotation was successful")
+                createChartAnnotationList(annotationArray);
             }
         })
     }
@@ -277,10 +283,6 @@ jQuery(document).ready(function() {
             // serialize into a new Object
             var formData = $('form#annotation-form').serializeObject();
 
-            // add extra data to the new object
-            formData.user = chartUser;
-            formData.dateCreated = moment();
-            formData.date = moment(formData.date, "YYYY-MM");
             submitAnnotation(formData);
         } else {
             alert("Annotation not uploaded");
@@ -378,7 +380,7 @@ jQuery(document).ready(function() {
 
 
     getHouseData(urlHousing);
-    createAnnotationList(annotationArray);
+    createChartAnnotationList(annotationArray);
 
     // $(document).ready(function() {
     //   $('a[data-toggle=modal], button[data-toggle=modal]').click(function () {
