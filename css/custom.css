@@ -11,3 +11,15 @@
 #inputContent {
   /*height: 200px;*/
 }
+
+#annotationInputGui {
+  background: white;
+}
+
+#update {
+  display: none;
+}
+
+#submit {
+  display: block;
+}
